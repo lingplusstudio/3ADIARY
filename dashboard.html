@@ -2,32 +2,94 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>後台監控面板 - 進階版</title>
  <style>
-    /* 💥 超級大字手機友善版 CSS 💥 */
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 25px 15px; max-width: 600px; margin: 0 auto; background: #edf2f7; font-size: 20px; }
-    h2 { color: #2d3748; text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 25px; }
-    .card { background: white; padding: 24px; margin-bottom: 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
-    
-    /* 頂部時間與狀態放大 */
-    .card-header { display: flex; justify-content: space-between; color: #4a5568; font-size: 17px; margin-bottom: 16px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; font-weight: bold; }
-    .score { font-weight: 900; color: #e65c00; font-size: 22px; }
-    
-    /* 朋友寫的訊息：大幅度放大 */
-    .msg { font-size: 22px; line-height: 1.6; color: #1a202c; white-space: pre-wrap; margin-bottom: 20px; letter-spacing: 0.8px; font-weight: 500; }
-    
-    /* 按鈕群組：加高、字體加大，極其好按 */
-    .btn-group { display: flex; gap: 12px; justify-content: space-between; border-top: 1px dashed #cbd5e0; padding-top: 20px; }
-    .btn { flex: 1; text-align: center; padding: 15px 10px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    /* 📱 手機無邊框滿版 + 超級大字 */
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+      padding: 15px 8px; /* 極小邊距，讓卡片放到最大 */
+      max-width: 100%;   /* 💥 填滿全螢幕 */
+      margin: 0; 
+      background: #edf2f7; 
+      font-size: 20px; 
+    }
+    h2 { 
+      color: #2d3748; 
+      text-align: center; 
+      font-size: 26px; 
+      font-weight: bold; 
+      margin: 15px 0; 
+    }
+    .card { 
+      background: white; 
+      padding: 22px 16px; 
+      margin-bottom: 15px; 
+      border-radius: 8px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+      position: relative; 
+      width: 100%;       /* 💥 卡片左右撐滿 */
+      box-sizing: border-box; 
+    }
+    .card-header { 
+      display: flex; 
+      justify-content: space-between; 
+      color: #556173; 
+      font-size: 16px; 
+      margin-bottom: 14px; 
+      border-bottom: 2px solid #edf2f7; 
+      padding-bottom: 8px; 
+      font-weight: bold; 
+    }
+    .score { 
+      font-weight: 900; 
+      color: #e65c00; 
+      font-size: 20px; 
+    }
+    .msg { 
+      font-size: 22px; /* 內文字體放大到 22px */
+      line-height: 1.6; 
+      color: #1a202c; 
+      white-space: pre-wrap; 
+      margin-bottom: 18px; 
+      letter-spacing: 0.5px; 
+      font-weight: 500; 
+    }
+    .btn-group { 
+      display: flex; 
+      gap: 10px; 
+      justify-content: space-between; 
+      border-top: 1px dashed #cbd5e0; 
+      padding-top: 16px; 
+    }
+    .btn { 
+      flex: 1; 
+      text-align: center; 
+      padding: 14px 5px; /* 加高按鈕，大拇指超好按 */
+      border: none; 
+      border-radius: 6px; 
+      font-size: 17px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      transition: 0.2s; 
+    }
     .btn-reply { background: #3182ce; color: white; }
     .btn-reply:hover { background: #2b6cb0; }
     .btn-edit { background: #dd6b20; color: white; }
     .btn-edit:hover { background: #c05621; }
     .btn-delete { background: #e53e3e; color: white; }
     .btn-delete:hover { background: #c53030; }
-    
-    /* 後台回覆/備註區塊放大 */
-    .reply-box { background: #f7fafc; border-left: 5px solid #3182ce; padding: 15px 18px; margin-top: 16px; font-size: 19px; color: #2d3748; border-radius: 0 8px 8px 0; line-height: 1.6; font-weight: 500; }
+    .reply-box { 
+      background: #f7fafc; 
+      border-left: 5px solid #3182ce; 
+      padding: 14px 16px; 
+      margin-top: 14px; 
+      font-size: 19px; 
+      color: #2d3748; 
+      border-radius: 0 8px 8px 0; 
+      line-height: 1.5; 
+      font-weight: 500; 
+    }
   </style>
 </head>
 <body>

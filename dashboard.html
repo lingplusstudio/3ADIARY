@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>後台監控面板</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #edf2f7; }
+    h2 { color: #2d3748; text-align: center; }
+    .card { background: white; padding: 18px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card-header { display: flex; justify-content: space-between; color: #718096; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #edf2f7; padding-bottom: 6px; }
+    .score { font-weight: bold; color: #dd6b20; font-size: 15px; }
+    .msg { font-size: 15px; line-height: 1.5; color: #2d3748; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+  <h2>安全狀態觀測看板</h2>
+  <div id="board">驗證安全憑證中...</div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ⚠️ 這裡貼上與輸入頁「一模一樣」的 Firebase 設定值
+    const firebaseConfig = {
+     apiKey: "AIzaSyBSW3kCmsW5-8KNGGg2KqRv5WonnTOuBNg",
+    authDomain: "aaadiary-840a0.firebaseapp.com",
+    projectId: "aaadiary-840a0",
+    storageBucket: "aaadiary-840a0.firebasestorage.app",
+    messagingSenderId: "803863119198",
+    appId: "1:803863119198:web:e00e660c986b438f037bcf",
+    measurementId: "G-4BCBBEKB03"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 🔐 設定你們自己才知道的進看版密碼
+    const SECRET_PASSWORD = "這裡輸入你們自訂的密碼"; 
+
+    const password = prompt("請輸入看板檢視密碼：");
+    if (password !== SECRET_PASSWORD) {
+      alert("密碼錯誤，拒絕存取");
+      window.location.href = "https://www.google.com";
+    } else {
+      loadData();
+    }
+
+    function loadData() {
+      // 依照時間戳記，從最新到最舊排序即時監聽
+      db.collection("logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+        let html = '';
+        if (snapshot.empty) {
+          html = '<p style="text-align:center; color:#999;">目前尚無回報紀錄</p>';
+        } else {
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            let timeStr = "未知時間";
+            if (data.timestamp) {
+              let date = data.timestamp.toDate();
+              timeStr = (date.getMonth()+1) + '/' + date.getDate() + ' ' + String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+            }
+            html += `<div class="card">
+              <div class="card-header">
+                <span>回報時間：${timeStr}</span>
+                <span>狀態值：<span class="score">${data.score} 分</span></span>
+              </div>
+              <div class="msg">${data.message || '(未填寫說明)'}</div>
+            </div>`;
+          });
+        }
+        document.getElementById('board').innerHTML = html;
+      });
+    }
+  </script>
+</body>
+</html>

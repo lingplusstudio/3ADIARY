@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>後台監控面板 - 進階版</title>
- <style>
+  <style>
     /* 📱 手機無邊框滿版 + 超級大字 */
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
@@ -79,17 +79,26 @@
     .btn-edit:hover { background: #c05621; }
     .btn-delete { background: #e53e3e; color: white; }
     .btn-delete:hover { background: #c53030; }
+
+    /* 多則回覆與備註的排版樣式 */
+    .replies-wrapper { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
     .reply-box { 
       background: #f7fafc; 
       border-left: 5px solid #3182ce; 
-      padding: 14px 16px; 
-      margin-top: 14px; 
+      padding: 12px 15px; 
       font-size: 19px; 
       color: #2d3748; 
       border-radius: 0 8px 8px 0; 
       line-height: 1.5; 
       font-weight: 500; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
     }
+    .reply-actions { display: flex; gap: 12px; margin-left: 10px; flex-shrink: 0; }
+    .reply-btn { font-size: 15px; font-weight: bold; cursor: pointer; text-decoration: underline; padding: 4px; }
+    .reply-btn.edit { color: #dd6b20; }
+    .reply-btn.delete { color: #e53e3e; }
   </style>
 </head>
 <body>
@@ -101,25 +110,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // ⚠️ 這裡請貼上你專屬的 Firebase 設定值
+    // ⚠️ Firebase 設定值保持不變
     const firebaseConfig = {
-     apiKey: "AIzaSyBSW3kCmsW5-8KNGGg2KqRv5WonnTOuBNg",
-    authDomain: "aaadiary-840a0.firebaseapp.com",
-    projectId: "aaadiary-840a0",
-    storageBucket: "aaadiary-840a0.firebasestorage.app",
-    messagingSenderId: "803863119198",
-    appId: "1:803863119198:web:e00e660c986b438f037bcf",
-    measurementId: "G-4BCBBEKB03"
+      apiKey: "AIzaSyBSW3kCmsW5-8KNGGg2KqRv5WonnTOuBNg",
+      authDomain: "aaadiary-840a0.firebaseapp.com",
+      projectId: "aaadiary-840a0",
+      storageBucket: "aaadiary-840a0.firebasestorage.app",
+      messagingSenderId: "803863119198",
+      appId: "1:803863119198:web:e00e660c986b438f037bcf",
+      measurementId: "G-4BCBBEKB03"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 🔐 設定你們自己才知道的進看版密碼
+    // 🔐 密碼驗證
     const SECRET_PASSWORD = "1988"; 
-
-    // 💬 如果想用 LINE Notify 傳送後台回覆通知，可以在此填入 Token（選填）
-    const LINE_NOTIFY_TOKEN = ""; 
 
     const password = prompt("請輸入看板檢視密碼：");
     if (password !== SECRET_PASSWORD) {
@@ -129,6 +135,7 @@
       loadData();
     }
 
+    // 🔄 載入與監聽資料
     function loadData() {
       db.collection("logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         let html = '';
@@ -137,7 +144,7 @@
         } else {
           snapshot.forEach((doc) => {
             const data = doc.data();
-            const docId = doc.id; // 取得該筆資料在 Firebase 的唯一 ID
+            const docId = doc.id;
             
             let timeStr = "未知時間";
             if (data.timestamp) {
@@ -152,51 +159,37 @@
               </div>
               <div class="msg" id="msg-${docId}">${data.message || '(未填寫說明)'}</div>`;
             
-            /* ❌ 舊的程式碼（你要刪掉的） */
-if (data.reply) {
-  html += `<div class="reply-box"><strong>後台備註/回覆：</strong>${data.reply}</div>`;
-}
+            // 💥 多則回覆與備註渲染區塊
+            if (data.replies && data.replies.length > 0) {
+              html += `<div class="replies-wrapper">`;
+              data.replies.forEach((replyText, index) => {
+                html += `
+                  <div class="reply-box">
+                    <span class="reply-text">${replyText}</span>
+                    <div class="reply-actions">
+                      <span class="reply-btn edit" onclick="editReply('${docId}', ${index}, '${replyText.replace(/'/g, "\\'")}')">修改</span>
+                      <span class="reply-btn delete" onclick="deleteReply('${docId}', ${index})">刪除</span>
+                    </div>
+                  </div>`;
+              });
+              html += `</div>`;
+            }
 
-// 載入操作按鈕（回覆、修改、刪除）
-html += `
-  <div class="btn-group">
-    <button class="btn btn-reply" onclick="replyLog('${docId}')">回覆/備註</button>
-    <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
-    <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
-  </div>
-</div>`;
+            // 載入操作按鈕（新增回覆、修改內文、刪除紀錄）
+            html += `
+              <div class="btn-group">
+                <button class="btn btn-reply" onclick="addReply('${docId}')">新增備註/回覆</button>
+                <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
+                <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
+              </div>
+            </div>`;
+          });
+        }
+        document.getElementById('board').innerHTML = html;
+      });
+    }
 
-
-/* ──────────────────────────────────────────────────────── */
-
-
-/* ⭕ 全新的程式碼（你要貼上取代的） */
-// 💥 修改：支援多則回覆與備註的渲染
-if (data.replies && data.replies.length > 0) {
-  html += `<div class="replies-wrapper">`;
-  data.replies.forEach((replyText, index) => {
-    html += `
-      <div class="reply-box">
-        <span class="reply-text">${replyText}</span>
-        <div class="reply-actions">
-          <span class="reply-btn edit" onclick="editReply('${docId}', ${index}, '${replyText}')">修改</span>
-          <span class="reply-btn delete" onclick="deleteReply('${docId}', ${index})">刪除</span>
-        </div>
-      </div>`;
-  });
-  html += `</div>`;
-}
-
-// 載入底部的操作按鈕
-html += `
-  <div class="btn-group">
-    <button class="btn btn-reply" onclick="addReply('${docId}')">新增備註/回覆</button>
-    <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
-    <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
-  </div>
-</div>`;
-
-    // 🗑️ 功能 1：刪除紀錄（可以用來刪掉測試資料）
+    // 🗑️ 功能 1：刪除紀錄
     function deleteLog(id) {
       if (confirm("確定要刪除這筆回報紀錄嗎？刪除後無法復原。")) {
         db.collection("logs").doc(id).delete()
@@ -205,7 +198,7 @@ html += `
       }
     }
 
-    // ✏️ 功能 2：修改內文
+    // ✏️ 功能 2：修改主內文
     function editLog(id) {
       const currentMsg = document.getElementById(`msg-${id}`).innerText;
       const newMsg = prompt("請輸入修改後的內容：", currentMsg);
@@ -219,53 +212,48 @@ html += `
       }
     }
 
-    // 💬 功能 3：回覆或加上內部備註
-    // 💬 1. 新增備註（支援多則回覆）
-function addReply(id) {
-  const replyMsg = prompt("請輸入新的回覆或內部備註：");
-  if (replyMsg !== null && replyMsg.trim() !== "") {
-    // 使用 arrayUnion 將新回覆塞入 Firebase 的 replies 陣列中
-    db.collection("logs").doc(id).update({
-      replies: firebase.firestore.FieldValue.arrayUnion(replyMsg.trim())
-    })
-    .then(() => { alert("已成功新增備註！"); })
-    .catch((error) => { alert("新增失敗: " + error); });
-  }
-}
-
-// ✏️ 2. 修改指定的那一則備註
-function editReply(id, index, oldText) {
-  const newText = prompt("請修改備註內容：", oldText);
-  if (newText !== null && newText.trim() !== "" && newText.trim() !== oldText) {
-    // 陣列修改邏輯：先拿到原本的所有備註，改掉指定 index 後再寫回
-    db.collection("logs").doc(id).get().then((doc) => {
-      if (doc.exists) {
-        let replies = doc.data().replies || [];
-        replies[index] = newText.trim(); // 替換指定的那一則
-        
-        return db.collection("logs").doc(id).update({ replies: replies });
+    // 💬 功能 3-1：新增多則備註/回覆
+    function addReply(id) {
+      const replyMsg = prompt("請輸入新的回覆或內部備註：");
+      if (replyMsg !== null && replyMsg.trim() !== "") {
+        db.collection("logs").doc(id).update({
+          replies: firebase.firestore.FieldValue.arrayUnion(replyMsg.trim())
+        })
+        .then(() => { alert("已成功新增備註！"); })
+        .catch((error) => { alert("新增失敗: " + error); });
       }
-    })
-    .then(() => { alert("備註已修改成功！"); })
-    .catch((error) => { alert("修改失敗: " + error); });
-  }
-}
+    }
 
-// 🗑️ 3. 刪除指定的那一則備註
-function deleteReply(id, index) {
-  if (confirm("確定要刪除這則備註嗎？")) {
-    db.collection("logs").doc(id).get().then((doc) => {
-      if (doc.exists) {
-        let replies = doc.data().replies || [];
-        replies.splice(index, 1); // 移除指定 index 的那一則
-        
-        return db.collection("logs").doc(id).update({ replies: replies });
+    // ✏️ 功能 3-2：修改指定 index 的備註
+    function editReply(id, index, oldText) {
+      const newText = prompt("請修改備註內容：", oldText);
+      if (newText !== null && newText.trim() !== "" && newText.trim() !== oldText) {
+        db.collection("logs").doc(id).get().then((doc) => {
+          if (doc.exists) {
+            let replies = doc.data().replies || [];
+            replies[index] = newText.trim();
+            return db.collection("logs").doc(id).update({ replies: replies });
+          }
+        })
+        .then(() => { alert("備註已修改成功！"); })
+        .catch((error) => { alert("修改失敗: " + error); });
       }
-    })
-    .then(() => { alert("備註已成功刪除！"); })
-    .catch((error) => { alert("刪除失敗: " + error); });
-  }
-}
+    }
+
+    // 🗑️ 功能 3-3：刪除指定 index 的備註
+    function deleteReply(id, index) {
+      if (confirm("確定要刪除這則備註嗎？")) {
+        db.collection("logs").doc(id).get().then((doc) => {
+          if (doc.exists) {
+            let replies = doc.data().replies || [];
+            replies.splice(index, 1);
+            return db.collection("logs").doc(id).update({ replies: replies });
+          }
+        })
+        .then(() => { alert("備註已成功刪除！"); })
+        .catch((error) => { alert("刪除失敗: " + error); });
+      }
+    }
   </script>
 </body>
 </html>

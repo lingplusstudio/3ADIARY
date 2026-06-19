@@ -220,12 +220,16 @@
       }
     }
 
-    // 💬 功能 3-1：新增多則備註/回覆
+    // 💬 功能 3-1：新增多則備註/回覆（自動帶入當前登入者姓名）
     function addReply(id) {
       const replyMsg = prompt("請輸入新的回覆或內部備註：");
       if (replyMsg !== null && replyMsg.trim() !== "") {
+        
+        // 💥 關鍵在這裡：確認這行有沒有把 [名字] 黏到訊息前面
+        const formattedMsg = `[${currentUser}] ${replyMsg.trim()}`;
+        
         db.collection("logs").doc(id).update({
-          replies: firebase.firestore.FieldValue.arrayUnion(replyMsg.trim())
+          replies: firebase.firestore.FieldValue.arrayUnion(formattedMsg)
         })
         .then(() => { alert("已成功新增備註！"); })
         .catch((error) => { alert("新增失敗: " + error); });

@@ -123,15 +123,24 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 🔐 密碼驗證
-    const SECRET_PASSWORD = "1988"; 
+    // 🔐 設定密碼與回覆人名稱的對應表
+    const PASSWORD_MAP = {
+      "0402": "Pengin",
+      "0808": "張瑄",
+      "0719": "Abby"
+    };
 
+    // 全域變數：用來儲存當前登入的使用者名稱
+    let currentUser = ""; 
+
+    // 驗證登入
     const password = prompt("請輸入看板檢視密碼：");
-    if (password !== SECRET_PASSWORD) {
+    if (PASSWORD_MAP.hasOwnProperty(password)) {
+      currentUser = PASSWORD_MAP[password]; // 成功登入，記住是誰回覆的
+      loadData();
+    } else {
       alert("密碼錯誤，拒絕存取");
       window.location.href = "https://www.google.com";
-    } else {
-      loadData();
     }
 
     // 🔄 載入與監聽資料

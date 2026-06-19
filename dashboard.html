@@ -130,21 +130,86 @@
       "0719": "Abby"
     };
 
-    // 全域變數：用來儲存當前登入的使用者名稱
+    // 🎭 設定偽裝用的假密碼
+    const FAKE_PASSWORD = "1234"; 
+
+    // 全域變數
     let currentUser = ""; 
+    let isFakeMode = false; // 紀錄當前是否為偽裝模式
 
     // 驗證登入
     const password = prompt("請輸入看板檢視密碼：");
     if (PASSWORD_MAP.hasOwnProperty(password)) {
-      currentUser = PASSWORD_MAP[password]; // 成功登入，記住是誰回覆的
+      currentUser = PASSWORD_MAP[password]; // 正常模式
+      isFakeMode = false;
       loadData();
+    } else if (password === FAKE_PASSWORD) {
+      currentUser = "Guest"; // 偽裝模式
+      isFakeMode = true;
+      loadData(); // 載入假資料
     } else {
       alert("密碼錯誤，拒絕存取");
       window.location.href = "https://www.google.com";
     }
-
-    // 🔄 載入與監聽資料
+// 🔄 載入與監聽資料（相容 20 則生活雜事偽裝模式）
     function loadData() {
+      // 🎭 如果是假密碼登入，直接渲染 20 則生活雜事假資料
+      if (isFakeMode) {
+        let html = '';
+        const fakeLogs = [
+          { score: 4, message: "今天下午把客廳跟廚房全面除塵整理了一遍，順便做完了浴室除黴，看到家裡變乾淨心情真好。", timeStr: "6/19 15:30", replies: ["[Pengin] 太賢慧了吧！跪求打掃秘訣XD"] },
+          { score: 5, message: "花了一小時複習台股基本面，研究了幾檔高殖利率概念股的財報，慢慢建立自己的選股策略，收穫很多。", timeStr: "6/18 21:15", replies: [] },
+          { score: 3, message: "晚餐嘗試做了新菜色「馬鈴薯燉肉」，雖然味道稍微淡了一點，但整體還算成功，下次醬油可以多放一匙。", timeStr: "6/18 18:40", replies: [] },
+          { score: 4, message: "今天把累積一週的衣服洗完、曬好、折好了。順便把下週的理財預算做了一番檢視，控管支出。", timeStr: "6/17 22:10", replies: ["[Abby] 預算控管推推，記帳真的很有用。"] },
+          { score: 4, message: "看完了《原子習慣》的精華章節，提醒自己每天只要進步1%就好。晚點準備來做20分鐘的伸展運動拉拉筋。", timeStr: "6/17 14:25", replies: [] },
+          { score: 3, message: "今天工作比較繁瑣，下班整個人有點無力。晚上打算早點泡個熱水澡睡覺，修復一下體力。", timeStr: "6/16 20:50", replies: ["[張瑄] 辛苦了！早點休息，明天又是新的一天！"] },
+          { score: 5, message: "早起閱讀了半小時的財經新聞，追蹤了最新美聯儲降息的趨勢。感覺對總體經濟的架構又更理解了一些。", timeStr: "6/16 08:15", replies: [] },
+          { score: 4, message: "下午抽空整理了衣櫃，把一整季沒穿的舊衣服整理出來準備斷捨離，順便把除濕桶都換了新的。", timeStr: "6/15 16:30", replies: [] },
+          { score: 3, message: "今天股票帳戶有一點微幅修正，不過因為是長期投資，心態調適得還不錯，不隨便被市場情緒影響。", timeStr: "6/15 13:10", replies: [] },
+          { score: 5, message: "今天去超市大採購，買齊了這一週需要的食材。結帳時特別對了一下明細，成功維持在預算內，給自己拍拍手。", timeStr: "6/14 19:45", replies: [] },
+          { score: 4, message: "把陽台的盆栽修剪了一下枯葉、澆了水，看著植物長出新芽感覺特別療癒，這就是生活的小確幸吧。", timeStr: "6/14 10:20", replies: ["[Pengin] 陽台流！我的植物常常被我養死QQ"] },
+          { score: 3, message: "下午出門辦事，天氣實在太熱了，整個人有點輕微中暑的感覺。回程趕緊買了運動飲料補充電解質。", timeStr: "6/13 15:55", replies: [] },
+          { score: 4, message: "今天複習了資產配置的觀念，決定把一小部分資金轉移到相對穩健的債券ETF，降低整體的波動度。", timeStr: "6/13 11:15", replies: [] },
+          { score: 5, message: "週末的大掃除日！把全家地板都拖了一遍，床單跟被套也全部拆下來洗過曬乾，晚上一定超好睡。", timeStr: "6/12 17:00", replies: [] },
+          { score: 4, message: "跟朋友聊了一下最近的投資心得，交換了彼此對ETF定期定額的看法，覺得多元吸收大家的想法蠻有幫助的。", timeStr: "6/12 14:30", replies: [] },
+          { score: 3, message: "今天稍微放縱了一下，下午茶吃了蛋糕。沒關係，晚上少吃一點澱粉，多補充一點蛋白質來平衡回來。", timeStr: "6/11 16:15", replies: [] },
+          { score: 4, message: "把手機裡幾千張過期的截圖跟照片做了一次大清理，清出了將近 10GB 的空間，手機運行速度順暢多了。", timeStr: "6/11 11:00", replies: ["[Abby] 照片清理超花時間的，佩服你的毅力！"] },
+          { score: 5, message: "今天下班去跑步機快走了40分鐘，流汗的感覺非常舒服，維持運動習慣真的能讓人精神變好。", timeStr: "6/10 20:30", replies: [] },
+          { score: 4, message: "重新調整了記帳軟體的分類標籤，讓每個月的被動收入與主動收入能夠更清晰地呈現，方便月底檢討。", timeStr: "6/10 12:15", replies: [] },
+          { score: 3, message: "今天天氣陰陰的，心情也跟著有點悶。不過晚上看了一部好笑的綜藝節目，大笑幾聲之後感覺放鬆不少。", timeStr: "6/09 22:00", replies: [] }
+        ];
+
+        fakeLogs.forEach((data) => {
+          html += `<div class="card">
+            <div class="card-header">
+              <span>回報時間：${data.timeStr}</span>
+              <span>狀態值：<span class="score">${data.score} 分</span></span>
+            </div>
+            <div class="msg">${data.message}</div>`;
+          
+          if (data.replies && data.replies.length > 0) {
+            html += `<div class="replies-wrapper">`;
+            data.replies.forEach(replyText => {
+              html += `<div class="reply-box"><span class="reply-text">${replyText}</span></div>`;
+            });
+            html += `</div>`;
+          }
+
+          // 假按鈕（點擊只會跳出提示，無法真正修改）
+          html += `
+            <div class="btn-group">
+              <button class="btn btn-reply" onclick="alert('示範帳號無操作權限')">新增備註/回覆</button>
+              <button class="btn btn-edit" onclick="alert('示範帳號無操作權限')">修改內文</button>
+              <button class="btn btn-delete" onclick="alert('示範帳號無操作權限')">刪除紀錄</button>
+            </div>
+          </div>`;
+        });
+        
+        document.getElementById('board').innerHTML = html;
+        return; // 中斷，不走下面 Firebase 真實資料流程
+      }
+
+      // 🌐 以下是原本正常的 Firebase 真實資料流程
       db.collection("logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         let html = '';
         if (snapshot.empty) {
@@ -167,7 +232,6 @@
               </div>
               <div class="msg" id="msg-${docId}">${data.message || '(未填寫說明)'}</div>`;
             
-            // 💥 多則回覆與備註渲染區塊
             if (data.replies && data.replies.length > 0) {
               html += `<div class="replies-wrapper">`;
               data.replies.forEach((replyText, index) => {
@@ -183,7 +247,6 @@
               html += `</div>`;
             }
 
-            // 載入操作按鈕（新增回覆、修改內文、刪除紀錄）
             html += `
               <div class="btn-group">
                 <button class="btn btn-reply" onclick="addReply('${docId}')">新增備註/回覆</button>

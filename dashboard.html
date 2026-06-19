@@ -152,24 +152,49 @@
               </div>
               <div class="msg" id="msg-${docId}">${data.message || '(未填寫說明)'}</div>`;
             
-            // 如果這筆資料之前有被後台回覆或備註，就顯示出來
-            if (data.reply) {
-              html += `<div class="reply-box"><strong>後台備註/回覆：</strong>${data.reply}</div>`;
-            }
-            
-            // 載入操作按鈕（回覆、修改、刪除）
-            html += `
-              <div class="btn-group">
-                <button class="btn btn-reply" onclick="replyLog('${docId}')">回覆/備註</button>
-                <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
-                <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
-              </div>
-            </div>`;
-          });
-        }
-        document.getElementById('board').innerHTML = html;
-      });
-    }
+            /* ❌ 舊的程式碼（你要刪掉的） */
+if (data.reply) {
+  html += `<div class="reply-box"><strong>後台備註/回覆：</strong>${data.reply}</div>`;
+}
+
+// 載入操作按鈕（回覆、修改、刪除）
+html += `
+  <div class="btn-group">
+    <button class="btn btn-reply" onclick="replyLog('${docId}')">回覆/備註</button>
+    <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
+    <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
+  </div>
+</div>`;
+
+
+/* ──────────────────────────────────────────────────────── */
+
+
+/* ⭕ 全新的程式碼（你要貼上取代的） */
+// 💥 修改：支援多則回覆與備註的渲染
+if (data.replies && data.replies.length > 0) {
+  html += `<div class="replies-wrapper">`;
+  data.replies.forEach((replyText, index) => {
+    html += `
+      <div class="reply-box">
+        <span class="reply-text">${replyText}</span>
+        <div class="reply-actions">
+          <span class="reply-btn edit" onclick="editReply('${docId}', ${index}, '${replyText}')">修改</span>
+          <span class="reply-btn delete" onclick="deleteReply('${docId}', ${index})">刪除</span>
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+}
+
+// 載入底部的操作按鈕
+html += `
+  <div class="btn-group">
+    <button class="btn btn-reply" onclick="addReply('${docId}')">新增備註/回覆</button>
+    <button class="btn btn-edit" onclick="editLog('${docId}')">修改內文</button>
+    <button class="btn btn-delete" onclick="deleteLog('${docId}')">刪除紀錄</button>
+  </div>
+</div>`;
 
     // 🗑️ 功能 1：刪除紀錄（可以用來刪掉測試資料）
     function deleteLog(id) {
@@ -195,26 +220,52 @@
     }
 
     // 💬 功能 3：回覆或加上內部備註
-    function replyLog(id) {
-      const replyMsg = prompt("請輸入回覆或內部備註內容：");
-      
-      if (replyMsg !== null && replyMsg.trim() !== "") {
-        // 更新到 Firebase 做內部紀錄
-        db.collection("logs").doc(id).update({
-          reply: replyMsg
-        })
-        .then(() => { 
-          alert("回報狀態已更新備註！");
-          
-          // 如果你有設定 LINE_NOTIFY_TOKEN，這裡可以順便把回覆發到你們群組
-          if (LINE_NOTIFY_TOKEN) {
-            alert("正在同步發送 LINE 通知...");
-            // 注意：跨網域呼叫 LINE API 通常需要後端，此處主要先做 Firebase 內部儲存
-          }
-        })
-        .catch((error) => { alert("更新失敗: " + error); });
+    // 💬 1. 新增備註（支援多則回覆）
+function addReply(id) {
+  const replyMsg = prompt("請輸入新的回覆或內部備註：");
+  if (replyMsg !== null && replyMsg.trim() !== "") {
+    // 使用 arrayUnion 將新回覆塞入 Firebase 的 replies 陣列中
+    db.collection("logs").doc(id).update({
+      replies: firebase.firestore.FieldValue.arrayUnion(replyMsg.trim())
+    })
+    .then(() => { alert("已成功新增備註！"); })
+    .catch((error) => { alert("新增失敗: " + error); });
+  }
+}
+
+// ✏️ 2. 修改指定的那一則備註
+function editReply(id, index, oldText) {
+  const newText = prompt("請修改備註內容：", oldText);
+  if (newText !== null && newText.trim() !== "" && newText.trim() !== oldText) {
+    // 陣列修改邏輯：先拿到原本的所有備註，改掉指定 index 後再寫回
+    db.collection("logs").doc(id).get().then((doc) => {
+      if (doc.exists) {
+        let replies = doc.data().replies || [];
+        replies[index] = newText.trim(); // 替換指定的那一則
+        
+        return db.collection("logs").doc(id).update({ replies: replies });
       }
-    }
+    })
+    .then(() => { alert("備註已修改成功！"); })
+    .catch((error) => { alert("修改失敗: " + error); });
+  }
+}
+
+// 🗑️ 3. 刪除指定的那一則備註
+function deleteReply(id, index) {
+  if (confirm("確定要刪除這則備註嗎？")) {
+    db.collection("logs").doc(id).get().then((doc) => {
+      if (doc.exists) {
+        let replies = doc.data().replies || [];
+        replies.splice(index, 1); // 移除指定 index 的那一則
+        
+        return db.collection("logs").doc(id).update({ replies: replies });
+      }
+    })
+    .then(() => { alert("備註已成功刪除！"); })
+    .catch((error) => { alert("刪除失敗: " + error); });
+  }
+}
   </script>
 </body>
 </html>
